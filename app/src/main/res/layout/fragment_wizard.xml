@@ -57,6 +57,17 @@
                     android:visibility="gone"
                     tools:visibility="visible" />
             </FrameLayout>
+            <TextView
+                android:id="@+id/tvWizardError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:textColor="?attr/colorError"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="Error message goes here."
+                tools:visibility="visible" />
             <FrameLayout
                 android:id="@+id/flMockUiContainer"
                 android:layout_width="match_parent"

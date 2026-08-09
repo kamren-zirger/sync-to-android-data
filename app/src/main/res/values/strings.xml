@@ -129,4 +129,5 @@
     <string name="notif_sync_status">Sync %1$s</string>
     <string name="notif_success_msg">Successfully synced %1$s for %2$s</string>
     <string name="notif_error_msg">Sync completed with some errors for %1$s</string>
+    <string name="error_device_not_supported">Apologies for the inconvenience, the accessibility settings page could not be found. This device is not supported by Sync To Android Data.</string>
 </resources>

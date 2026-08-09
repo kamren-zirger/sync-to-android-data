@@ -101,6 +101,8 @@ class WizardFragment : Fragment() {
         if (_binding == null) return
         val step = steps[currentStep]
         binding.btnWizardAction.visibility = View.GONE
+        binding.pbWizardAction.visibility = View.GONE
+        binding.tvWizardError.visibility = View.GONE
         binding.btnNext.isEnabled = true 
         hideAllMocks()
         when (step) {
@@ -195,11 +197,23 @@ class WizardFragment : Fragment() {
                                 if (success) {
                                     updateStep()
                                 } else {
-                                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                                    try {
+                                        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                                    } catch (e: Exception) {
+                                        Log.e("WizardFragment", "Failed to open accessibility settings", e)
+                                        binding.tvWizardError.text = getString(R.string.error_device_not_supported)
+                                        binding.tvWizardError.visibility = View.VISIBLE
+                                    }
                                 }
                             }
                         } else {
-                            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                            try {
+                                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                            } catch (e: Exception) {
+                                Log.e("WizardFragment", "Failed to open accessibility settings", e)
+                                binding.tvWizardError.text = getString(R.string.error_device_not_supported)
+                                binding.tvWizardError.visibility = View.VISIBLE
+                            }
                         }
                     }
                     binding.btnNext.isEnabled = false
