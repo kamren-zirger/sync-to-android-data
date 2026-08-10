@@ -37,6 +37,10 @@ class SettingsFragment : Fragment() {
         binding.switchShowToasts.setOnCheckedChangeListener { _, isChecked ->
             settings.showToasts = isChecked
         }
+        binding.switchEnableLogging.isChecked = settings.enableLogging
+        binding.switchEnableLogging.setOnCheckedChangeListener { _, isChecked ->
+            settings.enableLogging = isChecked
+        }
         binding.btnNotificationSettings.setOnClickListener {
             val intent = android.content.Intent().apply {
                 action = android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS

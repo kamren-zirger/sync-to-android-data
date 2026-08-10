@@ -42,6 +42,8 @@
     <string name="settings_version_format">Version: %1$s</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_rerun_wizard">Re-run Setup Wizard</string>
+    <string name="settings_enable_logging">Enable Debug Logging</string>
+    <string name="settings_enable_logging_desc">Only required to help debug sync misbehavior issues. Records focus changes to help identify manufacturer-specific packages that must be handled for proper sync behavior. Logs are stored in \'Documents/Sync To Android Data\' and are NEVER transmitted automatically. Logs can be manually sent to the developer after opening an issue in the GitHub repository.</string>
     <string name="edit_section_target_app">Target App</string>
     <string name="edit_btn_select_app">Select App</string>
     <string name="edit_no_app_selected">No app selected</string>

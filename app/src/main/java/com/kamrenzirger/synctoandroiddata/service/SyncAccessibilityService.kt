@@ -2,6 +2,7 @@ package com.kamrenzirger.synctoandroiddata.service
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import com.kamrenzirger.synctoandroiddata.R
@@ -16,9 +17,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 class SyncAccessibilityService : AccessibilityService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + Job())
-    private var lastPackageName: CharSequence? = null
+    private var lastPackageName: String? = null
+    private var pendingExitJob: Job? = null
+    private var settlingJob: Job? = null
+    private var activeSessionFile: File? = null
+
+    companion object {
+        private const val SETTLING_PERIOD_MS = 2000L // Period to wait for app/overlays to settle
+        private const val EXIT_DEBOUNCE_MS = 1000L // Focus must be gone for 1s to trigger exit
+    }
+
     private fun isIgnoredPackage(packageName: String): Boolean {
         val ignoredList = listOf(
             "com.android.systemui",
@@ -26,51 +41,175 @@ class SyncAccessibilityService : AccessibilityService() {
             "com.samsung.android.incallui",
             "com.google.android.googlequicksearchbox",
             "com.sec.android.inputmethod",
-            "com.microsoft.emmx", 
+            "com.microsoft.emmx",
+            "com.rp.gameassistant",
+            "com.rp.settings",
+            "com.rp.mapping",
+            "com.retroidpocket.gameassistant",
+            "com.retroidpocket.gamelauncher",
+            "com.retroidpocket.setupwizard",
+            "com.draco.anyhome",
+            "com.android.permissioncontroller",
             applicationContext.packageName
         )
-        return ignoredList.contains(packageName)
+        val isIgnored = ignoredList.contains(packageName)
+        if (isIgnored) {
+            Log.e("SYNC_DEBUG", "isIgnoredPackage: $packageName is ignored")
+        }
+        return isIgnored
     }
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            val packageName = event.packageName?.toString() ?: return
-            if (isIgnoredPackage(packageName)) {
+            val settings = SettingsManager(applicationContext)
+            if (!settings.enableLogging) {
+                // If logging is disabled, we still need to handle the focus change
+                val packageName = event.packageName?.toString() ?: return
+                if (isIgnoredPackage(packageName)) return
+                if (packageName != lastPackageName) {
+                    handlePackageChange(lastPackageName, packageName)
+                    lastPackageName = packageName
+                }
                 return
             }
-            if (packageName != lastPackageName?.toString()) {
-                handlePackageChange(lastPackageName?.toString(), packageName)
+
+            val packageName = event.packageName?.toString() ?: return
+            val className = event.className?.toString() ?: "Unknown"
+            val isFullScreen = event.isFullScreen
+            val logMsg = "TYPE_WINDOW_STATE_CHANGED: package=$packageName, class=$className, fullScreen=$isFullScreen, lastPackageName=$lastPackageName"
+            Log.e("SYNC_DEBUG", logMsg)
+            
+            logToFile(logMsg)
+            
+            if (isIgnoredPackage(packageName)) {
+                Log.e("SYNC_DEBUG", "Ignoring package $packageName")
+                logToFile("Ignoring package $packageName")
+                return
+            }
+
+            if (packageName != lastPackageName) {
+                handlePackageChange(lastPackageName, packageName)
                 lastPackageName = packageName
             }
         }
     }
+
+    private fun logToFile(message: String) {
+        val file = activeSessionFile ?: return
+        serviceScope.launch(Dispatchers.IO) {
+            try {
+                if (!file.parentFile!!.exists()) {
+                    file.parentFile!!.mkdirs()
+                }
+                val timestamp = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date())
+                file.appendText("[$timestamp] $message\n")
+            } catch (e: Exception) {
+                Log.e("SYNC_DEBUG", "Failed to write to session log file", e)
+            }
+        }
+    }
+
     private fun handlePackageChange(oldPackage: String?, newPackage: String?) {
+        val settings = SettingsManager(applicationContext)
+        if (settings.enableLogging) {
+            Log.e("SYNC_DEBUG", "handlePackageChange: oldPackage=$oldPackage, newPackage=$newPackage")
+            logToFile("handlePackageChange: oldPackage=$oldPackage, newPackage=$newPackage")
+        }
+        
+        // Cancel any pending exit sync since focus has changed
+        pendingExitJob?.cancel()
+        
         serviceScope.launch {
             val db = AppDatabase.getDatabase(applicationContext)
             val myPackage = applicationContext.packageName
-            if (newPackage != null && newPackage != myPackage && newPackage != oldPackage) {
-                val entries = db.syncEntryDao().getSyncEntriesWithPairsForPackage(newPackage)
-                if (entries.isNotEmpty()) {
-                    for (entryWithPairs in entries) {
-                        if (entryWithPairs.entry.isEnabled) {
-                            performSync(entryWithPairs, isOpening = true)
-                        }
+            
+            // 1. Detect if the NEW package is a target app
+            val entries = db.syncEntryDao().getSyncEntriesWithPairsForPackage(newPackage ?: "")
+            if (entries.isNotEmpty()) {
+                if (settings.enableLogging) {
+                    Log.e("SYNC_DEBUG", ">> Detected TARGET OPENING of $newPackage")
+                    
+                    // Initialize session file in Documents/Sync To Android Data
+                    val timeStr = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                    val logDir = File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS), "Sync To Android Data")
+                    // Directory will be created in logToFile if it doesn't exist
+                    activeSessionFile = File(logDir, "sync_session_${newPackage}_$timeStr.txt")
+                    logToFile(">> Session Started for $newPackage")
+                    logToFile("Note: Logs are NEVER transmitted automatically. You must manually send them via GitHub if needed.")
+                }
+                
+                // Trigger opening sync immediately
+                for (entryWithPairs in entries) {
+                    if (entryWithPairs.entry.isEnabled) {
+                        performSync(entryWithPairs, isOpening = true)
                     }
                 }
+
+                // Start the settling period
+                settlingJob?.cancel()
+                settlingJob = serviceScope.launch {
+                    if (settings.enableLogging) {
+                        Log.e("SYNC_DEBUG", "Starting ${SETTLING_PERIOD_MS}ms settling period...")
+                        logToFile("Starting ${SETTLING_PERIOD_MS}ms settling period...")
+                    }
+                    kotlinx.coroutines.delay(SETTLING_PERIOD_MS)
+                    
+                    // After 2 seconds, whatever is currently focused becomes the new "baseline"
+                    // We update lastPackageName to the current focus to "swallow" any overlays
+                    val currentFocus = lastPackageName 
+                    if (settings.enableLogging) {
+                        Log.e("SYNC_DEBUG", "Settling period finished. New baseline focus: $currentFocus")
+                        logToFile("Settling period finished. New baseline focus: $currentFocus")
+                    }
+                }
+                return@launch
             }
+
+            // 2. Handle Closing sync for the OLD package
             if (oldPackage != null && oldPackage != newPackage && oldPackage != myPackage) {
-                val entries = db.syncEntryDao().getSyncEntriesWithPairsForPackage(oldPackage)
-                if (entries.isNotEmpty()) {
-                    for (entryWithPairs in entries) {
-                        if (entryWithPairs.entry.isEnabled) {
-                            performSync(entryWithPairs, isOpening = false)
+                val oldEntries = db.syncEntryDao().getSyncEntriesWithPairsForPackage(oldPackage)
+                if (oldEntries.isNotEmpty()) {
+                    
+                    // If we are still in the settling period, don't trigger exit yet
+                    if (settlingJob?.isActive == true) {
+                        if (settings.enableLogging) {
+                            Log.e("SYNC_DEBUG", "Focus changed to $newPackage during settling period. Ignoring exit from $oldPackage.")
+                            logToFile("Focus changed to $newPackage during settling period. Ignoring exit from $oldPackage.")
+                        }
+                        return@launch
+                    }
+
+                    // Start a stable exit check
+                    pendingExitJob = serviceScope.launch {
+                        if (settings.enableLogging) {
+                            Log.e("SYNC_DEBUG", "Target $oldPackage lost focus. Waiting ${EXIT_DEBOUNCE_MS}ms to verify exit...")
+                            logToFile("Target $oldPackage lost focus. Waiting ${EXIT_DEBOUNCE_MS}ms to verify exit...")
+                        }
+                        kotlinx.coroutines.delay(EXIT_DEBOUNCE_MS)
+                        
+                        if (settings.enableLogging) {
+                            Log.e("SYNC_DEBUG", "<< Detected STABLE CLOSING of $oldPackage (now: $newPackage)")
+                            logToFile("<< Detected STABLE CLOSING of $oldPackage (now: $newPackage)")
+                        }
+                        for (entryWithPairs in oldEntries) {
+                            if (entryWithPairs.entry.isEnabled) {
+                                performSync(entryWithPairs, isOpening = false)
+                            }
+                        }
+                        
+                        // Session finished
+                        if (settings.enableLogging) {
+                            logToFile("<< Session Ended")
+                            activeSessionFile = null
                         }
                     }
                 }
             }
         }
     }
+
     private suspend fun performSync(entryWithPairs: SyncEntryWithPairs, isOpening: Boolean) {
         val entry = entryWithPairs.entry
+        Log.e("SYNC_DEBUG", "performSync: appName=${entry.appName}, isOpening=$isOpening")
         val pairs = entryWithPairs.pairs
         if (pairs.isEmpty()) {
             return

@@ -129,14 +129,43 @@
             android:background="@android:color/darker_gray"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp" />
-        <TextView
-            android:id="@+id/tvAppVersion"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:alpha="0.7"
-            android:layout_marginBottom="16dp"
-            tools:text="Version: 1.0" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_enable_logging"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_enable_logging_desc"
+                    android:textSize="12sp"
+                    android:alpha="0.7" />
+            </LinearLayout>
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchEnableLogging"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+        <Button
+            android:id="@+id/btnDonateKofi"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/settings_donate_kofi"
+            android:textStyle="bold" />
         <Button
             android:id="@+id/btnGitHubRepo"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -150,15 +179,16 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:text="@string/settings_rerun_wizard"
             android:textStyle="bold" />
-        <Button
-            android:id="@+id/btnDonateKofi"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        <TextView
+            android:id="@+id/tvAppVersion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/settings_donate_kofi"
-            android:textStyle="bold" />
+            android:textSize="14sp"
+            android:alpha="0.7"
+            android:gravity="center"
+            tools:text="Version: 1.0" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
