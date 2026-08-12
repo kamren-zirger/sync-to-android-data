@@ -10,8 +10,8 @@ Since Android 11, the `Android/data` directory has been locked down by the new s
 **Sync To Android Data** leverages [Shizuku](https://github.com/rikkaapps/shizuku) to automate file transfer to and from locations in `Android/data`, enabling data for these previously-restricted apps to be synchronized. Defined "Sync Entries" automatically move files between these restricted internal folders and a standard external folder of your choice when the "target app" is opened or closed.
 
 ## 📦 Installation
-1.  Go to the [**Releases**](https://github.com/kamren-zirger/sync-to-android-data/releases) page of this repository.
-2.  Download the latest `sync-to-android-data.apk`.
+1.  Go to the [**latest release**](https://github.com/kamren-zirger/sync-to-android-data/releases/latest).
+2.  Download `sync-to-android-data.apk`.
 3.  Install the APK on your Android device.
 4.  Use the built-in wizard to setup the app, including installation of Shizuku and all other prerequisites.
 
