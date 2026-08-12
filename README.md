@@ -18,10 +18,17 @@ Since Android 11, the `Android/data` directory has been locked down by the new s
 ## ⚙️ How it Works
 
 * **Sync Entries** contain configuration for each app you intend to keep data in sync for.
+  * <img width="302" height="81" alt="Screenshot 2026-08-11 at 11 11 22 PM" src="https://github.com/user-attachments/assets/508b572d-6ac4-4dec-a675-3ff282466388" />
 * **Target Apps** within Sync Entries define which package will be monitored for open and close by the sync engine (the app you intend to keep data in sync for).
+  * <img width="310" height="106" alt="Screenshot 2026-08-11 at 11 11 35 PM" src="https://github.com/user-attachments/assets/2bc32ec0-5346-4b24-9558-08c9cbbd54f8" />
 * **Directory Pairs** within Sync Entries define which directories will be kept in sync based on the targeted application. Multiple Directory Pairs can be created for each Sync Entry.
   * **External Directories** within Directory Pairs define the location to be used as a source when the Target App is opened (External -> Internal sync occurs). Typically, these are directories that are accessible to your cloud storage/sync application.
   * **Internal Directories** within Directory Pairs define the location to be used as a source when the Target App is closed (Internal -> External sync occurs). Typically, these are directories within the Target App's respective folder in `Android/data`.
+  * <img width="306" height="318" alt="Screenshot 2026-08-11 at 11 11 46 PM" src="https://github.com/user-attachments/assets/4f989e18-921c-4fa0-b43d-4afdc446b03e" />
+
+## 🎥 Tutorial/Demonstration Video
+
+[Screen_recording_20260811_230750.webm](https://github.com/user-attachments/assets/75de983b-d6c2-4a65-ad0a-c46a1265e132)
 
 ## ⚠️ Safety & Disclaimer
 
