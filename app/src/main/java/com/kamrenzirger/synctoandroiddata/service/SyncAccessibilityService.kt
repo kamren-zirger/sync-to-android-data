@@ -30,7 +30,7 @@ class SyncAccessibilityService : AccessibilityService() {
     private var settlingJob: Job? = null
 
     companion object {
-        private const val SETTLING_PERIOD_MS = 2000L // Period to wait for app/overlays to settle
+        private const val SETTLING_PERIOD_MS = 1000L // Period to wait for app/overlays to settle
         private const val EXIT_DEBOUNCE_MS = 1000L // Focus must be gone for 1s to trigger exit
         private const val TAG = "SyncAccessibilityService"
     }
