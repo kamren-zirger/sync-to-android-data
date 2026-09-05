@@ -1,4 +1,7 @@
 package com.kamrenzirger.synctoandroiddata
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -6,7 +9,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.kamrenzirger.synctoandroiddata.databinding.FragmentSettingsBinding
+import com.kamrenzirger.synctoandroiddata.util.AppLogger
 import com.kamrenzirger.synctoandroiddata.util.SettingsManager
+
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
@@ -40,6 +45,15 @@ class SettingsFragment : Fragment() {
         binding.switchEnableLogging.isChecked = settings.enableLogging
         binding.switchEnableLogging.setOnCheckedChangeListener { _, isChecked ->
             settings.enableLogging = isChecked
+            if (!isChecked) {
+                AppLogger.clear()
+            }
+        }
+        binding.btnCopyLogs.setOnClickListener {
+            val logs = AppLogger.getFormattedLogs()
+            val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("SyncToAndroidData Logs", logs)
+            clipboard.setPrimaryClip(clip)
         }
         binding.btnNotificationSettings.setOnClickListener {
             val intent = android.content.Intent().apply {

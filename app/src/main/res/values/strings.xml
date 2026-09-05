@@ -43,7 +43,9 @@
     <string name="settings_section_support">Support</string>
     <string name="settings_rerun_wizard">Re-run Setup Wizard</string>
     <string name="settings_enable_logging">Enable Debug Logging</string>
-    <string name="settings_enable_logging_desc">Only required to help debug sync misbehavior issues. Records focus changes to help identify manufacturer-specific packages that must be handled for proper sync behavior. Logs are stored in \'Documents/Sync To Android Data\' and are NEVER transmitted automatically. Logs can be manually sent to the developer after opening an issue in the GitHub repository.</string>
+    <string name="settings_enable_logging_desc">Capture recent activity logs in local memory for troubleshooting. When enabled, the last 200 log lines are stored and can be copied to your clipboard. Logs are cleared when this setting is disabled.\n\nNote: Logs are NEVER automatically transmitted to the developer or any third party. For troubleshooting assistance, you must manually copy these logs and include them in a GitHub issue or otherwise send them to the developer.</string>
+    <string name="settings_copy_logs">Copy Debug Logs</string>
+    <string name="settings_logs_copied">Debug logs copied to clipboard</string>
     <string name="edit_section_target_app">Target App</string>
     <string name="edit_btn_select_app">Select App</string>
     <string name="edit_no_app_selected">No app selected</string>
