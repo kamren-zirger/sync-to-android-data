@@ -120,6 +120,22 @@ class MainFragment : Fragment() {
     }
     override fun onResume() {
         super.onResume()
+        val settings = SettingsManager(requireContext())
+        if (settings.isUpdateAvailable) {
+            binding.cardUpdateAvailable.visibility = View.VISIBLE
+            binding.tvUpdateDescription.text = getString(R.string.update_available_description, settings.latestVersion)
+            binding.btnDownloadUpdate.setOnClickListener {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kamren-zirger/sync-to-android-data/releases/latest"))
+                startActivity(intent)
+            }
+            binding.btnDismissUpdate.setOnClickListener {
+                settings.isUpdateAvailable = false
+                binding.cardUpdateAvailable.visibility = View.GONE
+            }
+        } else {
+            binding.cardUpdateAvailable.visibility = View.GONE
+        }
+
         if (ShizukuHelper.isShizukuAvailable() && ShizukuHelper.checkPermission(0)) {
             NotificationHelper.dismissNotification(requireContext(), NotificationHelper.ID_SHIZUKU_ALERT)
         }
