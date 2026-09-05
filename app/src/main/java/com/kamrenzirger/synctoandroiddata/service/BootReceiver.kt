@@ -19,19 +19,24 @@ class BootReceiver : BroadcastReceiver() {
         }
     }
     private fun checkPermissions(context: Context) {
-        val isShizukuInstalled = try {
-            context.packageManager.getPackageInfo("moe.shizuku.privileged.api", 0)
-            true
-        } catch (e: Exception) {
-            false
-        }
         val isShizukuAvailable = ShizukuHelper.isShizukuAvailable()
-        val isShizukuAuthorized = ShizukuHelper.checkPermission(0)
-        if (!isShizukuInstalled || !isShizukuAvailable || !isShizukuAuthorized) {
-            val shizukuIntent = context.packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api") 
+        val isShizukuAuthorized = if (isShizukuAvailable) ShizukuHelper.checkPermission(0) else false
+        
+        if (!isShizukuAvailable || !isShizukuAuthorized) {
+            val installedPackage = ShizukuHelper.SHIZUKU_PACKAGES.find { pkg ->
+                try {
+                    context.packageManager.getPackageInfo(pkg, 0)
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            
+            val shizukuIntent = installedPackage?.let { context.packageManager.getLaunchIntentForPackage(it) }
                 ?: Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://shizuku.rikka.app/"))
+            
             val (title, message, action) = when {
-                !isShizukuInstalled -> Triple(
+                installedPackage == null -> Triple(
                     context.getString(R.string.shizuku_not_installed_title),
                     context.getString(R.string.shizuku_not_installed_description),
                     context.getString(R.string.btn_get_shizuku)

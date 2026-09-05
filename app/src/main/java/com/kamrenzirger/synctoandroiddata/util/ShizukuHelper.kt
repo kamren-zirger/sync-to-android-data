@@ -15,6 +15,8 @@ import rikka.shizuku.Shizuku
 import rikka.shizuku.Shizuku.UserServiceArgs
 object ShizukuHelper {
     private var userService: ISyncService? = null
+    val SHIZUKU_PACKAGES = listOf("moe.shizuku.privileged.api", "moe.shizuku.service")
+
     init {
         try {
             Shizuku.addBinderReceivedListener {
