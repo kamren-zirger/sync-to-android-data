@@ -28,6 +28,7 @@ import com.kamrenzirger.synctoandroiddata.databinding.FragmentSyncEditBinding
 import com.kamrenzirger.synctoandroiddata.ui.AppPickerAdapter
 import com.kamrenzirger.synctoandroiddata.ui.DirectoryPairAdapter
 import com.kamrenzirger.synctoandroiddata.ui.DirectoryPickerAdapter
+import com.kamrenzirger.synctoandroiddata.util.AppLogger
 import com.kamrenzirger.synctoandroiddata.util.NotificationHelper
 import com.kamrenzirger.synctoandroiddata.util.SettingsManager
 import com.kamrenzirger.synctoandroiddata.util.ShizukuHelper
@@ -167,6 +168,7 @@ class SyncEditFragment : Fragment() {
             .setTitle(title)
             .setView(dialogBinding.root)
             .setPositiveButton(R.string.picker_btn_select_current) { _, _ ->
+                AppLogger.i("Setup", "Directory selected for position $position: $currentPath (isInternal=$isInternal)", requireContext(), force = true)
                 if (isInternal) {
                     pairAdapter.updateInternalPath(position, currentPath)
                 } else {
@@ -183,8 +185,23 @@ class SyncEditFragment : Fragment() {
         binding.pbLoadingFiles.visibility = View.VISIBLE
         binding.rvDirectoryPicker.alpha = 0.5f
         val adapter = binding.rvDirectoryPicker.adapter as DirectoryPickerAdapter
+        
+        val isAndroidData = path.contains("/Android/data", ignoreCase = true)
+        if (isAndroidData) {
+            AppLogger.i("FilePicker", "Listing directory: $path", requireContext(), force = true)
+        }
+
         lifecycleScope.launch(Dispatchers.IO) {
             val rawFiles = ShizukuHelper.listFiles(path)
+            
+            if (isAndroidData) {
+                if (rawFiles.isEmpty()) {
+                    AppLogger.w("FilePicker", "No items found in $path (Shizuku returned empty list)", requireContext(), force = true)
+                } else {
+                    AppLogger.i("FilePicker", "Found ${rawFiles.size} items in $path: ${rawFiles.take(10).joinToString(", ")}${if (rawFiles.size > 10) "..." else ""}", requireContext(), force = true)
+                }
+            }
+
             val items = mutableListOf<String>()
             if (path != "/storage/emulated") {
                 items.add("..")
@@ -227,7 +244,9 @@ class SyncEditFragment : Fragment() {
             .setView(dialogBinding.root)
             .create()
         val pickerAdapter = AppPickerAdapter(pm) { app ->
-            updateSelectedAppUi(app.packageName, pm.getApplicationLabel(app).toString())
+            val appName = pm.getApplicationLabel(app).toString()
+            AppLogger.i("Setup", "Target app selected: $appName (${app.packageName})", requireContext(), force = true)
+            updateSelectedAppUi(app.packageName, appName)
             dialog.dismiss()
         }
         dialogBinding.rvAppPicker.layoutManager = LinearLayoutManager(requireContext())
@@ -330,11 +349,17 @@ class SyncEditFragment : Fragment() {
         }
         val db = AppDatabase.getDatabase(requireContext())
         lifecycleScope.launch(Dispatchers.IO) {
+            val mirrorDeletions = binding.switchMirrorDeletions.isChecked
+            AppLogger.i("Setup", "Saving Sync Entry: appName=$selectedAppName, package=$selectedPackageName, mirrorDeletions=$mirrorDeletions, pairCount=${pairs.size}", requireContext(), force = true)
+            pairs.forEachIndexed { index, pair ->
+                AppLogger.i("Setup", "  Pair $index: internal=${pair.internalPath}, external=${pair.externalPath}", requireContext(), force = true)
+            }
+
             val entry = SyncEntry(
                 id = if (existingEntryId == -1L) 0 else existingEntryId,
                 appName = selectedAppName!!,
                 packageName = selectedPackageName!!,
-                mirrorDeletions = binding.switchMirrorDeletions.isChecked
+                mirrorDeletions = mirrorDeletions
             )
             if (existingEntryId == -1L) {
                 db.syncEntryDao().insertSyncEntryWithPairs(entry, pairs)
