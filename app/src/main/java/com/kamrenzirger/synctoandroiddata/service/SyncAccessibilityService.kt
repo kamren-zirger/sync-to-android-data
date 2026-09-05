@@ -8,6 +8,7 @@ import android.widget.Toast
 import com.kamrenzirger.synctoandroiddata.R
 import com.kamrenzirger.synctoandroiddata.data.AppDatabase
 import com.kamrenzirger.synctoandroiddata.data.SyncEntryWithPairs
+import com.kamrenzirger.synctoandroiddata.util.AppLogger
 import com.kamrenzirger.synctoandroiddata.util.NotificationHelper
 import com.kamrenzirger.synctoandroiddata.util.SettingsManager
 import com.kamrenzirger.synctoandroiddata.util.ShizukuHelper
@@ -27,11 +28,11 @@ class SyncAccessibilityService : AccessibilityService() {
     private var lastPackageName: String? = null
     private var pendingExitJob: Job? = null
     private var settlingJob: Job? = null
-    private var activeSessionFile: File? = null
 
     companion object {
         private const val SETTLING_PERIOD_MS = 2000L // Period to wait for app/overlays to settle
         private const val EXIT_DEBOUNCE_MS = 1000L // Focus must be gone for 1s to trigger exit
+        private const val TAG = "SyncAccessibilityService"
     }
 
     private fun isIgnoredPackage(packageName: String): Boolean {
@@ -54,37 +55,19 @@ class SyncAccessibilityService : AccessibilityService() {
         )
         val isIgnored = ignoredList.contains(packageName)
         if (isIgnored) {
-            Log.e("SYNC_DEBUG", "isIgnoredPackage: $packageName is ignored")
+            AppLogger.e(TAG, "isIgnoredPackage: $packageName is ignored", applicationContext)
         }
         return isIgnored
     }
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            val settings = SettingsManager(applicationContext)
-            if (!settings.enableLogging) {
-                // If logging is disabled, we still need to handle the focus change
-                val packageName = event.packageName?.toString() ?: return
-                if (isIgnoredPackage(packageName)) return
-                if (packageName != lastPackageName) {
-                    handlePackageChange(lastPackageName, packageName)
-                    lastPackageName = packageName
-                }
-                return
-            }
-
             val packageName = event.packageName?.toString() ?: return
+            if (isIgnoredPackage(packageName)) return
+            
             val className = event.className?.toString() ?: "Unknown"
             val isFullScreen = event.isFullScreen
             val logMsg = "TYPE_WINDOW_STATE_CHANGED: package=$packageName, class=$className, fullScreen=$isFullScreen, lastPackageName=$lastPackageName"
-            Log.e("SYNC_DEBUG", logMsg)
-            
-            logToFile(logMsg)
-            
-            if (isIgnoredPackage(packageName)) {
-                Log.e("SYNC_DEBUG", "Ignoring package $packageName")
-                logToFile("Ignoring package $packageName")
-                return
-            }
+            AppLogger.e(TAG, logMsg, applicationContext)
 
             if (packageName != lastPackageName) {
                 handlePackageChange(lastPackageName, packageName)
@@ -93,27 +76,8 @@ class SyncAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun logToFile(message: String) {
-        val file = activeSessionFile ?: return
-        serviceScope.launch(Dispatchers.IO) {
-            try {
-                if (!file.parentFile!!.exists()) {
-                    file.parentFile!!.mkdirs()
-                }
-                val timestamp = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date())
-                file.appendText("[$timestamp] $message\n")
-            } catch (e: Exception) {
-                Log.e("SYNC_DEBUG", "Failed to write to session log file", e)
-            }
-        }
-    }
-
     private fun handlePackageChange(oldPackage: String?, newPackage: String?) {
-        val settings = SettingsManager(applicationContext)
-        if (settings.enableLogging) {
-            Log.e("SYNC_DEBUG", "handlePackageChange: oldPackage=$oldPackage, newPackage=$newPackage")
-            logToFile("handlePackageChange: oldPackage=$oldPackage, newPackage=$newPackage")
-        }
+        AppLogger.e(TAG, "handlePackageChange: oldPackage=$oldPackage, newPackage=$newPackage", applicationContext)
         
         // Cancel any pending exit sync since focus has changed
         pendingExitJob?.cancel()
@@ -125,17 +89,9 @@ class SyncAccessibilityService : AccessibilityService() {
             // 1. Detect if the NEW package is a target app
             val entries = db.syncEntryDao().getSyncEntriesWithPairsForPackage(newPackage ?: "")
             if (entries.isNotEmpty()) {
-                if (settings.enableLogging) {
-                    Log.e("SYNC_DEBUG", ">> Detected TARGET OPENING of $newPackage")
-                    
-                    // Initialize session file in Documents/Sync To Android Data
-                    val timeStr = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                    val logDir = File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS), "Sync To Android Data")
-                    // Directory will be created in logToFile if it doesn't exist
-                    activeSessionFile = File(logDir, "sync_session_${newPackage}_$timeStr.txt")
-                    logToFile(">> Session Started for $newPackage")
-                    logToFile("Note: Logs are NEVER transmitted automatically. You must manually send them via GitHub if needed.")
-                }
+                AppLogger.isSessionActive = true
+                AppLogger.e(TAG, ">> Detected TARGET OPENING of $newPackage", applicationContext, force = true)
+                AppLogger.e(TAG, ">> Session Started for $newPackage", applicationContext)
                 
                 // Trigger opening sync immediately
                 for (entryWithPairs in entries) {
@@ -147,19 +103,13 @@ class SyncAccessibilityService : AccessibilityService() {
                 // Start the settling period
                 settlingJob?.cancel()
                 settlingJob = serviceScope.launch {
-                    if (settings.enableLogging) {
-                        Log.e("SYNC_DEBUG", "Starting ${SETTLING_PERIOD_MS}ms settling period...")
-                        logToFile("Starting ${SETTLING_PERIOD_MS}ms settling period...")
-                    }
+                    AppLogger.e(TAG, "Starting ${SETTLING_PERIOD_MS}ms settling period...", applicationContext)
                     kotlinx.coroutines.delay(SETTLING_PERIOD_MS)
                     
                     // After 2 seconds, whatever is currently focused becomes the new "baseline"
                     // We update lastPackageName to the current focus to "swallow" any overlays
                     val currentFocus = lastPackageName 
-                    if (settings.enableLogging) {
-                        Log.e("SYNC_DEBUG", "Settling period finished. New baseline focus: $currentFocus")
-                        logToFile("Settling period finished. New baseline focus: $currentFocus")
-                    }
+                    AppLogger.e(TAG, "Settling period finished. New baseline focus: $currentFocus", applicationContext)
                 }
                 return@launch
             }
@@ -171,25 +121,16 @@ class SyncAccessibilityService : AccessibilityService() {
                     
                     // If we are still in the settling period, don't trigger exit yet
                     if (settlingJob?.isActive == true) {
-                        if (settings.enableLogging) {
-                            Log.e("SYNC_DEBUG", "Focus changed to $newPackage during settling period. Ignoring exit from $oldPackage.")
-                            logToFile("Focus changed to $newPackage during settling period. Ignoring exit from $oldPackage.")
-                        }
+                        AppLogger.e(TAG, "Focus changed to $newPackage during settling period. Ignoring exit from $oldPackage.", applicationContext)
                         return@launch
                     }
 
                     // Start a stable exit check
                     pendingExitJob = serviceScope.launch {
-                        if (settings.enableLogging) {
-                            Log.e("SYNC_DEBUG", "Target $oldPackage lost focus. Waiting ${EXIT_DEBOUNCE_MS}ms to verify exit...")
-                            logToFile("Target $oldPackage lost focus. Waiting ${EXIT_DEBOUNCE_MS}ms to verify exit...")
-                        }
+                        AppLogger.e(TAG, "Target $oldPackage lost focus. Waiting ${EXIT_DEBOUNCE_MS}ms to verify exit...", applicationContext)
                         kotlinx.coroutines.delay(EXIT_DEBOUNCE_MS)
                         
-                        if (settings.enableLogging) {
-                            Log.e("SYNC_DEBUG", "<< Detected STABLE CLOSING of $oldPackage (now: $newPackage)")
-                            logToFile("<< Detected STABLE CLOSING of $oldPackage (now: $newPackage)")
-                        }
+                        AppLogger.e(TAG, "<< Detected STABLE CLOSING of $oldPackage (now: $newPackage)", applicationContext, force = true)
                         for (entryWithPairs in oldEntries) {
                             if (entryWithPairs.entry.isEnabled) {
                                 performSync(entryWithPairs, isOpening = false)
@@ -197,10 +138,8 @@ class SyncAccessibilityService : AccessibilityService() {
                         }
                         
                         // Session finished
-                        if (settings.enableLogging) {
-                            logToFile("<< Session Ended")
-                            activeSessionFile = null
-                        }
+                        AppLogger.e(TAG, "<< Session Ended", applicationContext, force = true)
+                        AppLogger.isSessionActive = false
                     }
                 }
             }
@@ -209,7 +148,7 @@ class SyncAccessibilityService : AccessibilityService() {
 
     private suspend fun performSync(entryWithPairs: SyncEntryWithPairs, isOpening: Boolean) {
         val entry = entryWithPairs.entry
-        Log.e("SYNC_DEBUG", "performSync: appName=${entry.appName}, isOpening=$isOpening")
+        AppLogger.e(TAG, "performSync: appName=${entry.appName}, isOpening=$isOpening", applicationContext)
         val pairs = entryWithPairs.pairs
         if (pairs.isEmpty()) {
             return
@@ -264,11 +203,17 @@ class SyncAccessibilityService : AccessibilityService() {
                 val mirrorResult = ShizukuHelper.mirrorDeletions(src, dst)
                 if (mirrorResult.isFailure) {
                     allSuccess = false
+                    AppLogger.e(TAG, "Mirror deletions FAILED for $src -> $dst: ${mirrorResult.exceptionOrNull()?.message}", applicationContext, force = true)
+                } else {
+                    AppLogger.e(TAG, "Mirror deletions success for $src -> $dst", applicationContext, force = true)
                 }
             }
             val result = ShizukuHelper.executeCp(src, dst)
             if (!result.isSuccess) {
                 allSuccess = false
+                AppLogger.e(TAG, "Copy FAILED for $src -> $dst: ${result.exceptionOrNull()?.message}", applicationContext, force = true)
+            } else {
+                AppLogger.e(TAG, "Copy success for $src -> $dst", applicationContext, force = true)
             }
         }
         val statusStr = if (allSuccess) getString(R.string.sync_status_success) else getString(R.string.sync_status_failed)

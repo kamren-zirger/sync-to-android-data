@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.IBinder
-import android.util.Log
 import com.kamrenzirger.synctoandroiddata.ISyncService
 import com.kamrenzirger.synctoandroiddata.service.UserService
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +19,7 @@ object ShizukuHelper {
             Shizuku.addBinderReceivedListener {
             }
         } catch (e: Exception) {
-            Log.e("ShizukuHelper", "Failed to add binder listener", e)
+            // Can't log to AppLogger here without context easily, but init is rare
         }
     }
     fun isShizukuAvailable(): Boolean {
@@ -36,7 +35,6 @@ object ShizukuHelper {
             if (Shizuku.isPreV11()) return false
             return Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
         } catch (e: Exception) {
-            Log.e("ShizukuHelper", "Error checking permission", e)
             return false
         }
     }
@@ -66,7 +64,7 @@ object ShizukuHelper {
                     retry++
                 }
             } catch (e: Exception) {
-                Log.e("ShizukuHelper", "Failed to bind UserService", e)
+                // Ignore
             }
             userService
         }
@@ -116,20 +114,20 @@ object ShizukuHelper {
             Result.failure(e)
         }
     }
-    suspend fun runShellCommand(command: String): String {
+    suspend fun runShellCommand(context: Context, command: String): String {
         val service = getUserService() ?: return ""
         return try {
             service.runCommandWithOutput(command).joinToString("\n")
         } catch (e: Exception) {
-            Log.e("ShizukuHelper", "Shell command failed: $command", e)
+            AppLogger.e("ShizukuHelper", "Shell command failed: $command", context, e)
             ""
         }
     }
     suspend fun grantAccessibility(context: Context, serviceClass: Class<*>): Boolean {
         val componentName = android.content.ComponentName(context, serviceClass).flattenToString()
-        val currentServices = runShellCommand("settings get secure enabled_accessibility_services").trim()
+        val currentServices = runShellCommand(context, "settings get secure enabled_accessibility_services").trim()
         if (currentServices.contains(componentName)) {
-            runShellCommand("settings put secure accessibility_enabled 1")
+            runShellCommand(context, "settings put secure accessibility_enabled 1")
             return true
         }
         val newServices = if (currentServices.isEmpty() || currentServices == "null") {
@@ -137,8 +135,8 @@ object ShizukuHelper {
         } else {
             "$currentServices:$componentName"
         }
-        runShellCommand("settings put secure enabled_accessibility_services $newServices")
-        runShellCommand("settings put secure accessibility_enabled 1")
+        runShellCommand(context, "settings put secure enabled_accessibility_services $newServices")
+        runShellCommand(context, "settings put secure accessibility_enabled 1")
         return true
     }
 }

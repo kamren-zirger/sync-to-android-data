@@ -129,6 +129,33 @@
             android:background="@android:color/darker_gray"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp" />
+        <Button
+            android:id="@+id/btnRerunWizard"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/settings_rerun_wizard"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnGitHubRepo"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/settings_github_repo"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnDonateKofi"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="@string/settings_donate_kofi"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -159,28 +186,12 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
         <Button
-            android:id="@+id/btnDonateKofi"
+            android:id="@+id/btnCopyLogs"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="@string/settings_donate_kofi"
-            android:textStyle="bold" />
-        <Button
-            android:id="@+id/btnGitHubRepo"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/settings_github_repo"
-            android:textStyle="bold" />
-        <Button
-            android:id="@+id/btnRerunWizard"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="@string/settings_rerun_wizard"
+            android:text="@string/settings_copy_logs"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/tvAppVersion"

@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.kamrenzirger.synctoandroiddata.databinding.FragmentWizardBinding
 import com.kamrenzirger.synctoandroiddata.service.SyncAccessibilityService
+import com.kamrenzirger.synctoandroiddata.util.AppLogger
 import com.kamrenzirger.synctoandroiddata.util.SettingsManager
 import com.kamrenzirger.synctoandroiddata.util.ShizukuHelper
 import kotlinx.coroutines.launch
@@ -80,7 +80,7 @@ class WizardFragment : Fragment() {
         try {
             Shizuku.addRequestPermissionResultListener(shizukuPermissionListener)
         } catch (e: Exception) {
-            Log.e("WizardFragment", "Failed to add Shizuku listener", e)
+            AppLogger.e("WizardFragment", "Failed to add Shizuku listener", requireContext(), e)
         }
         updateStep()
         binding.btnNext.setOnClickListener {
@@ -148,7 +148,7 @@ class WizardFragment : Fragment() {
                             try {
                                 Shizuku.requestPermission(1001)
                             } catch (e: Exception) {
-                                Log.e("WizardFragment", "Failed to request Shizuku permission", e)
+                                AppLogger.e("WizardFragment", "Failed to request Shizuku permission", requireContext(), e)
                                 Toast.makeText(requireContext(), R.string.toast_shizuku_prompt_failed, Toast.LENGTH_SHORT).show()
                             }
                         }
@@ -200,7 +200,7 @@ class WizardFragment : Fragment() {
                                     try {
                                         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                                     } catch (e: Exception) {
-                                        Log.e("WizardFragment", "Failed to open accessibility settings", e)
+                                        AppLogger.e("WizardFragment", "Failed to open accessibility settings", requireContext(), e)
                                         binding.tvWizardError.text = getString(R.string.error_device_not_supported)
                                         binding.tvWizardError.visibility = View.VISIBLE
                                     }
@@ -210,7 +210,7 @@ class WizardFragment : Fragment() {
                             try {
                                 startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                             } catch (e: Exception) {
-                                Log.e("WizardFragment", "Failed to open accessibility settings", e)
+                                AppLogger.e("WizardFragment", "Failed to open accessibility settings", requireContext(), e)
                                 binding.tvWizardError.text = getString(R.string.error_device_not_supported)
                                 binding.tvWizardError.visibility = View.VISIBLE
                             }
@@ -340,7 +340,7 @@ class WizardFragment : Fragment() {
         try {
             Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener)
         } catch (e: Exception) {
-            Log.e("WizardFragment", "Failed to remove Shizuku listener", e)
+            AppLogger.e("WizardFragment", "Failed to remove Shizuku listener", requireContext(), e)
         }
         _binding = null
     }
