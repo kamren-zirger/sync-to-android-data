@@ -148,9 +148,12 @@ class SyncAccessibilityService : AccessibilityService() {
 
     private suspend fun performSync(entryWithPairs: SyncEntryWithPairs, isOpening: Boolean) {
         val entry = entryWithPairs.entry
-        AppLogger.e(TAG, "performSync: appName=${entry.appName}, isOpening=$isOpening", applicationContext)
         val pairs = entryWithPairs.pairs
+        
+        AppLogger.e(TAG, "performSync START: appName=${entry.appName}, isOpening=$isOpening, mirrorDeletions=${entry.mirrorDeletions}, pairCount=${pairs.size}", applicationContext, force = true)
+        
         if (pairs.isEmpty()) {
+            AppLogger.e(TAG, "performSync ABORTED: No directory pairs configured for ${entry.appName}", applicationContext, force = true)
             return
         }
         val settings = SettingsManager(applicationContext)
@@ -182,6 +185,9 @@ class SyncAccessibilityService : AccessibilityService() {
             val rawDst = if (isOpening) pair.internalPath else pair.externalPath
             val src = resolvePath(rawSrc)
             val dst = resolvePath(rawDst)
+            
+            AppLogger.e(TAG, "Syncing Pair: src=$src, dst=$dst, rawExternal=${pair.externalPath}, rawInternal=${pair.internalPath}", applicationContext, force = true)
+
             if (!dst.startsWith("/storage/emulated/0/Android/data")) {
                 if (!StorageUtils.isStorageMounted(dst)) {
                     showErrorToast(getString(R.string.toast_storage_unmounted, dst), settings)
