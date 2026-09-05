@@ -148,6 +148,15 @@
             android:textStyle="bold" />
 
         <Button
+            android:id="@+id/btnCheckUpdates"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/settings_check_updates"
+            android:textStyle="bold" />
+
+        <Button
             android:id="@+id/btnDonateKofi"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"

@@ -116,6 +116,19 @@
     <string name="sync_dir_ext_to_int">EXT → INT</string>
     <string name="sync_dir_int_to_ext">INT → EXT</string>
     <string name="toast_no_pairs">No directory pairs found for %1$s</string>
+
+    <string name="notif_update_available_title">Update Available</string>
+    <string name="notif_update_available_msg">Version v%1$s is now available on GitHub.</string>
+    <string name="btn_download">DOWNLOAD</string>
+    <string name="btn_dismiss">DISMISS</string>
+    <string name="update_available_title">New Version Available</string>
+    <string name="update_available_description">A newer version (v%1$s) of Sync To Android Data is available. We recommend updating to get the latest features and fixes.</string>
+    <string name="settings_check_updates">Check for Updates</string>
+    <string name="toast_update_checking">Checking for updates...</string>
+    <string name="toast_update_latest">You are on the latest version.</string>
+    <string name="toast_update_new_available">New version available: v%1$s</string>
+    <string name="toast_update_error">Error checking for updates: %1$s</string>
+
     <string name="toast_select_app_first">Please select a target app first</string>
     <string name="toast_shizuku_browse_req">Shizuku authorization required to browse Android/data</string>
     <string name="toast_select_app">Please select an app</string>

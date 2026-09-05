@@ -11,6 +11,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -22,6 +23,8 @@ import com.kamrenzirger.synctoandroiddata.service.SyncAccessibilityService
 import com.kamrenzirger.synctoandroiddata.util.NotificationHelper
 import com.kamrenzirger.synctoandroiddata.util.SettingsManager
 import com.kamrenzirger.synctoandroiddata.util.ShizukuHelper
+import com.kamrenzirger.synctoandroiddata.util.UpdateHelper
+import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -57,6 +60,11 @@ class MainActivity : AppCompatActivity() {
                 binding.appBarLayout.visibility = View.VISIBLE
             }
         }
+
+        lifecycleScope.launch {
+            UpdateHelper.checkForUpdates(this@MainActivity, manual = false)
+        }
+
         contentResolver.registerContentObserver(
             Settings.Secure.getUriFor(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES),
             false,
