@@ -76,7 +76,7 @@
     <string name="wizard_accessibility_desc">To detect when apps are opened/closed, this app requires Accessibility permissions.\n\nClicking \'GRANT PERMISSION\' should automatically enable this via Shizuku.\n\nIf it fails, please follow the manual steps below.</string>
     <string name="wizard_accessibility_enabled">✅ Accessibility service is enabled!</string>
     <string name="wizard_battery_title">Battery Optimization</string>
-    <string name="wizard_battery_desc">To ensure synchronization works reliably when you open or close apps, we recommend disabling battery optimization for this app.\n\nSince Android devices handle this differently, you may need to find this setting manually in your device\'s App Info page, and/or look for additional manufacturer-specific battery settings.\n\nYou can try clicking the button below to go directly to the optimization settings.</string>
+    <string name="wizard_battery_desc">To ensure synchronization works reliably when you open or close apps, it is recommended to disable battery optimization for this app.\n\nSince Android devices handle this differently, you may need to find this setting manually in your device\'s App Info page, and/or look for additional manufacturer-specific battery settings.\n\nYou can try clicking the button below to go directly to the optimization settings.</string>
     <string name="wizard_battery_optimized">✅ Battery optimization is disabled for this app!</string>
     <string name="wizard_btn_battery_settings">Open Battery Settings</string>
     <string name="wizard_how_to_add_title">1. Creating an Entry</string>
@@ -122,7 +122,7 @@
     <string name="btn_download">DOWNLOAD</string>
     <string name="btn_dismiss">DISMISS</string>
     <string name="update_available_title">New Version Available</string>
-    <string name="update_available_description">A newer version (v%1$s) of Sync To Android Data is available. We recommend updating to get the latest features and fixes.</string>
+    <string name="update_available_description">A newer version (v%1$s) of Sync To Android Data is available. Update to get the latest features and fixes.</string>
     <string name="settings_check_updates">Check for Updates</string>
     <string name="toast_update_checking">Checking for updates...</string>
     <string name="toast_update_latest">You are on the latest version.</string>

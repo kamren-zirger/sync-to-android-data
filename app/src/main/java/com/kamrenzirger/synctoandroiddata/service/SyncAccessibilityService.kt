@@ -106,7 +106,7 @@ class SyncAccessibilityService : AccessibilityService() {
                     AppLogger.e(TAG, "Starting ${SETTLING_PERIOD_MS}ms settling period...", applicationContext)
                     kotlinx.coroutines.delay(SETTLING_PERIOD_MS)
                     
-                    // After 2 seconds, whatever is currently focused becomes the new "baseline"
+                    // After 1 second, whatever is currently focused becomes the new "baseline"
                     // We update lastPackageName to the current focus to "swallow" any overlays
                     val currentFocus = lastPackageName 
                     AppLogger.e(TAG, "Settling period finished. New baseline focus: $currentFocus", applicationContext)
