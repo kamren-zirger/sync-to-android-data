@@ -113,34 +113,15 @@ class WizardFragment : Fragment() {
             }
             Step.SHIZUKU -> {
                 binding.tvWizardTitle.text = getString(R.string.wizard_shizuku_title)
-                val isInstalled = isPackageInstalled("moe.shizuku.privileged.api")
                 val isAvailable = ShizukuHelper.isShizukuAvailable()
-                val isAuthorized = ShizukuHelper.checkPermission(0)
+                val isAuthorized = if (isAvailable) ShizukuHelper.checkPermission(0) else false
+                
                 when {
-                    !isInstalled -> {
-                        binding.tvWizardDescription.text = getString(R.string.shizuku_not_installed_description)
-                        binding.btnWizardAction.visibility = View.VISIBLE
-                        binding.btnWizardAction.text = getString(R.string.btn_get_shizuku)
-                        binding.btnWizardAction.setOnClickListener {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
-                        }
-                        binding.btnNext.isEnabled = false
+                    isAvailable && isAuthorized -> {
+                        binding.tvWizardDescription.text = "✅ Shizuku is authorized and ready to go!"
+                        binding.btnNext.isEnabled = true
                     }
-                    !isAvailable -> {
-                        binding.tvWizardDescription.text = getString(R.string.shizuku_not_running_description)
-                        binding.btnWizardAction.visibility = View.VISIBLE
-                        binding.btnWizardAction.text = getString(R.string.btn_open_shizuku)
-                        binding.btnWizardAction.setOnClickListener {
-                            val intent = requireContext().packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api")
-                            if (intent != null) {
-                                startActivity(intent)
-                            } else {
-                                Toast.makeText(requireContext(), R.string.toast_no_shizuku_app, Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                        binding.btnNext.isEnabled = false
-                    }
-                    !isAuthorized -> {
+                    isAvailable && !isAuthorized -> {
                         binding.tvWizardDescription.text = getString(R.string.shizuku_not_authorized_description)
                         binding.btnWizardAction.visibility = View.VISIBLE
                         binding.btnWizardAction.text = getString(R.string.btn_authorize_now)
@@ -155,8 +136,30 @@ class WizardFragment : Fragment() {
                         binding.btnNext.isEnabled = false
                     }
                     else -> {
-                        binding.tvWizardDescription.text = "✅ Shizuku is authorized and ready to go!"
-                        binding.btnNext.isEnabled = true
+                        // Not available, check if any known package is installed
+                        val installedPackage = ShizukuHelper.SHIZUKU_PACKAGES.find { isPackageInstalled(it) }
+                        
+                        if (installedPackage != null) {
+                            binding.tvWizardDescription.text = getString(R.string.shizuku_not_running_description)
+                            binding.btnWizardAction.visibility = View.VISIBLE
+                            binding.btnWizardAction.text = getString(R.string.btn_open_shizuku)
+                            binding.btnWizardAction.setOnClickListener {
+                                val intent = requireContext().packageManager.getLaunchIntentForPackage(installedPackage)
+                                if (intent != null) {
+                                    startActivity(intent)
+                                } else {
+                                    Toast.makeText(requireContext(), R.string.toast_no_shizuku_app, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            binding.tvWizardDescription.text = getString(R.string.shizuku_not_installed_description)
+                            binding.btnWizardAction.visibility = View.VISIBLE
+                            binding.btnWizardAction.text = getString(R.string.btn_get_shizuku)
+                            binding.btnWizardAction.setOnClickListener {
+                                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+                            }
+                        }
+                        binding.btnNext.isEnabled = false
                     }
                 }
                 binding.btnNext.text = getString(R.string.next)

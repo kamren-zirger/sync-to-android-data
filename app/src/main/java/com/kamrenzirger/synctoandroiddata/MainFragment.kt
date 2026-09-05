@@ -155,30 +155,15 @@ class MainFragment : Fragment() {
         if (isAccessEnabled) {
             NotificationHelper.dismissNotification(requireContext(), NotificationHelper.ID_ACCESSIBILITY_ALERT)
         }
-        val isInstalled = isPackageInstalled("moe.shizuku.privileged.api")
         val isAvailable = ShizukuHelper.isShizukuAvailable()
-        val isAuthorized = ShizukuHelper.checkPermission(0)
+        val isAuthorized = if (isAvailable) ShizukuHelper.checkPermission(0) else false
+        
         when {
-            !isInstalled -> {
-                binding.cardShizukuWarning.visibility = View.VISIBLE
-                binding.tvShizukuWarningTitle.text = getString(R.string.shizuku_not_installed_title)
-                binding.tvShizukuWarningDescription.text = getString(R.string.shizuku_not_installed_description)
-                binding.btnShizukuAction.text = getString(R.string.btn_get_shizuku)
-                binding.btnShizukuAction.setOnClickListener {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
-                }
+            isAvailable && isAuthorized -> {
+                binding.cardShizukuWarning.visibility = View.GONE
+                NotificationHelper.dismissNotification(requireContext(), NotificationHelper.ID_SHIZUKU_ALERT)
             }
-            !isAvailable -> {
-                binding.cardShizukuWarning.visibility = View.VISIBLE
-                binding.tvShizukuWarningTitle.text = getString(R.string.shizuku_not_running_title)
-                binding.tvShizukuWarningDescription.text = getString(R.string.shizuku_not_running_description)
-                binding.btnShizukuAction.text = getString(R.string.btn_open_shizuku)
-                binding.btnShizukuAction.setOnClickListener {
-                    val intent = requireContext().packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api")
-                    if (intent != null) startActivity(intent)
-                }
-            }
-            !isAuthorized -> {
+            isAvailable && !isAuthorized -> {
                 binding.cardShizukuWarning.visibility = View.VISIBLE
                 binding.tvShizukuWarningTitle.text = getString(R.string.shizuku_not_authorized_title)
                 binding.tvShizukuWarningDescription.text = getString(R.string.shizuku_not_authorized_description)
@@ -192,8 +177,26 @@ class MainFragment : Fragment() {
                 }
             }
             else -> {
-                binding.cardShizukuWarning.visibility = View.GONE
-                NotificationHelper.dismissNotification(requireContext(), NotificationHelper.ID_SHIZUKU_ALERT)
+                // Not available, check if any known package is installed
+                val installedPackage = ShizukuHelper.SHIZUKU_PACKAGES.find { isPackageInstalled(it) }
+                
+                binding.cardShizukuWarning.visibility = View.VISIBLE
+                if (installedPackage != null) {
+                    binding.tvShizukuWarningTitle.text = getString(R.string.shizuku_not_running_title)
+                    binding.tvShizukuWarningDescription.text = getString(R.string.shizuku_not_running_description)
+                    binding.btnShizukuAction.text = getString(R.string.btn_open_shizuku)
+                    binding.btnShizukuAction.setOnClickListener {
+                        val intent = requireContext().packageManager.getLaunchIntentForPackage(installedPackage)
+                        if (intent != null) startActivity(intent)
+                    }
+                } else {
+                    binding.tvShizukuWarningTitle.text = getString(R.string.shizuku_not_installed_title)
+                    binding.tvShizukuWarningDescription.text = getString(R.string.shizuku_not_installed_description)
+                    binding.btnShizukuAction.text = getString(R.string.btn_get_shizuku)
+                    binding.btnShizukuAction.setOnClickListener {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+                    }
+                }
             }
         }
     }
